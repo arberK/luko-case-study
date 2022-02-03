@@ -37,26 +37,37 @@ export default function AddInventory() {
 
   const [addDisabled, setAddDisabled] = useState<boolean>(true)
 
+  const [cameraPermissions, requestPermission] = ImagePicker.useCameraPermissions();
+
   const takePhoto = async () => {
-    let result = await ImagePicker.launchCameraAsync({
-      base64: true,
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.2,
-    });
+    try {
 
-    console.log(result);
+      const permissions = await requestPermission();
+      if (!permissions?.granted) {
+        Alert.alert("Error", "Permissions not granted", [{ text: "Open Settings", onPress: handleOpenSettings }])
+        return;
+      }
+      let result = await ImagePicker.launchCameraAsync({
+        base64: true,
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.2,
+      });
 
-    if (!result.cancelled) {
-      setPhoto('data:image/png;base64,' + result.base64);
+      if (!result.cancelled) {
+        setPhoto('data:image/png;base64,' + result.base64);
+      }
+    } catch (error) {
+      Alert.alert("Error", JSON.stringify(error))
     }
+
   };
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       base64: true,
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 0.2,
@@ -96,6 +107,10 @@ export default function AddInventory() {
     }
   }
 
+  const handleChoosePhotoSource = () => {
+    Alert.alert("Photo source", "Choose the source of the photo?", [{ text: "Camera", onPress: takePhoto }, { text: "Gallery", onPress: pickImage }])
+  }
+
   useEffect(() => {
     if (purchasePrice) {
       if (isNaN(purchasePrice)) {
@@ -119,9 +134,7 @@ export default function AddInventory() {
   }, [name, selectedCategory, purchasePrice, photo, description]);
 
 
-  const handleChoosePhotoSource = () => {
-    Alert.alert("Photo source", "Choose the source of the photo?", [{ text: "Camera", onPress: takePhoto }, { text: "Gallery", onPress: pickImage }])
-  }
+
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding" enabled >
@@ -130,8 +143,8 @@ export default function AddInventory() {
         <Button title='Add' disabled={addDisabled} onPress={handleAddInventory} color={addDisabled ? "gray" : Colors[colorScheme].tint}></Button>
       </View>
       <ScrollView  >
-        {hasPermission === false ? (
-          <View>
+        {cameraPermissions?.granted === false ? (
+          <View style={{ justifyContent: "center", alignItems: "center" }}>
             <Text>Grant camera permission</Text>
             <Button title='Open Settings' onPress={handleOpenSettings} color={Colors[colorScheme].tint}></Button>
           </View>) :
