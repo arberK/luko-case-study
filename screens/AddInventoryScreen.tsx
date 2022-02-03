@@ -41,12 +41,6 @@ export default function AddInventory() {
 
   const takePhoto = async () => {
     try {
-
-      const permissions = await requestPermission();
-      if (!permissions?.granted) {
-        Alert.alert("Error", "Permissions not granted", [{ text: "Open Settings", onPress: handleOpenSettings }])
-        return;
-      }
       let result = await ImagePicker.launchCameraAsync({
         base64: true,
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -96,8 +90,8 @@ export default function AddInventory() {
       const value = await AsyncStorage.getItem('inventoryList')
       if (value !== null) {
         invetoryList = JSON.parse(value);
-        invetoryList.push(newItem)
       }
+      invetoryList.push(newItem)
       const newInventoryList = JSON.stringify(invetoryList)
       await AsyncStorage.setItem('inventoryList', newInventoryList)
       console.log("inventory Added")
@@ -135,6 +129,18 @@ export default function AddInventory() {
 
 
 
+  useEffect(() => {
+    const getCameraPermissions = async () => {
+      const permissions = await requestPermission();
+      if (!permissions?.granted) {
+        Alert.alert("Error", "Permissions not granted", [{ text: "Open Settings", onPress: handleOpenSettings }])
+      }
+    }
+
+    getCameraPermissions();
+
+  }, []);
+
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding" enabled >
@@ -144,7 +150,7 @@ export default function AddInventory() {
       </View>
       <ScrollView  >
         {cameraPermissions?.granted === false ? (
-          <View style={{ justifyContent: "center", alignItems: "center" }}>
+          <View style={{ justifyContent: "center", alignItems: "center", backgroundColor: "transparent" }}>
             <Text>Grant camera permission</Text>
             <Button title='Open Settings' onPress={handleOpenSettings} color={Colors[colorScheme].tint}></Button>
           </View>) :
